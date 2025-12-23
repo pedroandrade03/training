@@ -36,7 +36,7 @@ export default function AppLayout({
   }
 
   return (
-    <div className="flex min-h-screen flex-col pb-16">
+    <div className="flex min-h-screen flex-col pb-20 safe-area-inset-bottom">
       <AppHeader />
       <main className="flex-1">{children}</main>
       <BottomNav />

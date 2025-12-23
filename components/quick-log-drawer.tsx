@@ -149,8 +149,8 @@ export function QuickLogDrawer({
 
   return (
     <Drawer open={isOpen} onOpenChange={onClose}>
-      <DrawerContent className="max-h-[90vh]">
-        <DrawerHeader className="sticky top-0 z-10 bg-background">
+      <DrawerContent className="max-h-[85vh] flex flex-col">
+        <DrawerHeader className="flex-shrink-0 border-b bg-background">
           <DrawerTitle>
             {editingLogId ? "Editar" : "Registrar"} {exercise.name}
           </DrawerTitle>
@@ -166,8 +166,8 @@ export function QuickLogDrawer({
             </div>
           )}
         </DrawerHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto p-4">
-          <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
+          <div className="flex-1 space-y-4 overflow-y-auto p-4">
             {sets.map((set, index) => (
               <div
                 key={index}
@@ -239,27 +239,28 @@ export function QuickLogDrawer({
             ))}
           </div>
 
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleAddSet}
-            className="w-full"
-            disabled={loading}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Adicionar Série
-          </Button>
-
-          <DrawerFooter className="sticky bottom-0 bg-background">
-            <Button type="submit" size="lg" disabled={loading}>
-              {loading ? "Salvando..." : editingLogId ? "Atualizar" : "Salvar Treino"}
+          <div className="flex-shrink-0 space-y-2 border-t bg-background p-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleAddSet}
+              className="w-full"
+              disabled={loading}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Adicionar Série
             </Button>
-            <DrawerClose asChild>
-              <Button variant="outline" size="lg" disabled={loading}>
-                Cancelar
+            <div className="flex gap-2">
+              <Button type="submit" size="lg" disabled={loading} className="flex-1">
+                {loading ? "Salvando..." : editingLogId ? "Atualizar" : "Salvar Treino"}
               </Button>
-            </DrawerClose>
-          </DrawerFooter>
+              <DrawerClose asChild>
+                <Button variant="outline" size="lg" disabled={loading}>
+                  Cancelar
+                </Button>
+              </DrawerClose>
+            </div>
+          </div>
         </form>
       </DrawerContent>
     </Drawer>

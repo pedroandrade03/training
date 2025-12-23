@@ -133,14 +133,15 @@ export function CardioLogDrawer({
 
   return (
     <Drawer open={isOpen} onOpenChange={onClose}>
-      <DrawerContent>
-        <DrawerHeader>
+      <DrawerContent className="max-h-[85vh] flex flex-col">
+        <DrawerHeader className="flex-shrink-0 border-b bg-background">
           <DrawerTitle>Registrar {exercise.name}</DrawerTitle>
           <DrawerDescription>
             {editingLogId ? "Editar treino de cardio" : "Registre seu treino de cardio"}
           </DrawerDescription>
         </DrawerHeader>
-        <form onSubmit={handleSubmit} className="p-4 space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
+          <div className="flex-1 space-y-4 overflow-y-auto p-4">
           <div className="space-y-2">
             <label htmlFor="duration" className="text-sm font-medium">
               Tempo (minutos) *
@@ -221,29 +222,31 @@ export function CardioLogDrawer({
               {error}
             </div>
           )}
-
-          <div className="flex gap-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="flex-1"
-            >
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting} className="flex-1">
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Salvando...
-                </>
-              ) : editingLogId ? (
-                "Atualizar"
-              ) : (
-                "Registrar"
-              )}
-            </Button>
+          </div>
+          <div className="flex-shrink-0 border-t bg-background p-4">
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={isSubmitting}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isSubmitting} className="flex-1">
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Salvando...
+                  </>
+                ) : editingLogId ? (
+                  "Atualizar"
+                ) : (
+                  "Registrar"
+                )}
+              </Button>
+            </div>
           </div>
         </form>
       </DrawerContent>
