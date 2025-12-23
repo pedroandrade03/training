@@ -11,6 +11,9 @@ import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import type { Exercise } from "@/hooks/use-exercises"
 
+// Force dynamic rendering to avoid build-time prerender errors
+export const dynamic = 'force-dynamic'
+
 export default function AdminPage() {
   const { exercises, isLoading, createExercise, updateExercise, deleteExercise } =
     useExercises()

@@ -6,6 +6,9 @@ import { useAuth } from "@/hooks/use-auth"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
+// Force dynamic rendering for authenticated routes
+export const dynamic = 'force-dynamic'
+
 export default function AppLayout({
   children,
 }: {
