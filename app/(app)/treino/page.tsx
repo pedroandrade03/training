@@ -5,12 +5,16 @@ import { useExercises } from "@/hooks/use-exercises"
 import { useAuth } from "@/hooks/use-auth"
 import { ExerciseCard } from "@/components/exercise-card"
 import { CategoryFilter } from "@/components/category-filter"
+import { ExerciseForm } from "@/components/exercise-form"
 import { Loader2 } from "lucide-react"
+import type { Exercise } from "@/hooks/use-exercises"
 
 export default function TreinoPage() {
-  const { exercises, isLoading, deleteExercise } = useExercises()
+  const { exercises, isLoading, deleteExercise, updateExercise, createExercise } = useExercises()
   const { isAdmin } = useAuth()
-  const [selectedCategory, setSelectedCategory] = useState<string>("all")
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [editingExercise, setEditingExercise] = useState<Exercise | null>(null)
+  const [isFormOpen, setIsFormOpen] = useState(false)
 
   // Filter exercises by category (checking if exercise has the selected category in its list)
   const filteredExercises = selectedCategory === "all"
@@ -19,9 +23,33 @@ export default function TreinoPage() {
         exercise.categories.some(cat => cat.name === selectedCategory)
       )
 
-  const handleEdit = async (exercise: any) => {
-    // This will be handled by the admin page logic if integrated, or via modal
-    console.log("Edit requested for", exercise.id)
+  const handleEdit = async (exercise: Exercise) => {
+    setEditingExercise(exercise)
+    setIsFormOpen(true)
+  }
+
+  const handleSubmit = async (data: { 
+    name: string
+    suggested_reps: string
+    exercise_type?: 'strength' | 'cardio'
+    category_ids?: string[]
+    assigned_user_ids?: string[]
+  }) => {
+    try {
+      if (editingExercise) {
+        await updateExercise({
+          id: editingExercise.id,
+          ...data,
+        })
+      } else {
+        await createExercise(data)
+      }
+      setIsFormOpen(false)
+      setEditingExercise(null)
+    } catch (error) {
+      console.error("Error saving exercise:", error)
+      alert("Erro ao salvar exercício")
+    }
   }
 
   const handleDelete = async (id: string) => {
@@ -54,7 +82,7 @@ export default function TreinoPage() {
       
       <CategoryFilter
         selectedCategory={selectedCategory}
-        onSelectCategory={setSelectedCategory}
+        onCategoryChange={setSelectedCategory}
       />
       
       {exercises.length === 0 ? (
@@ -74,22 +102,37 @@ export default function TreinoPage() {
         <div className="flex min-h-[400px] items-center justify-center rounded-lg border border-dashed">
           <div className="text-center">
             <p className="text-muted-foreground">
-              Nenhum exercício encontrado na categoria "{selectedCategory}".
+              Nenhum exercício encontrado na categoria {selectedCategory ? `"${selectedCategory}"` : "selecionada"}.
             </p>
           </div>
         </div>
       ) : (
-        <div className="space-y-4">
-          {filteredExercises.map((exercise) => (
-            <ExerciseCard
-              key={exercise.id}
-              exercise={exercise}
-              isAdmin={isAdmin}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
+        <>
+          {isFormOpen && isAdmin && (
+            <div className="mb-4">
+              <ExerciseForm
+                exercise={editingExercise}
+                onSubmit={handleSubmit}
+                onCancel={() => {
+                  setIsFormOpen(false)
+                  setEditingExercise(null)
+                }}
+                isLoading={isLoading}
+              />
+            </div>
+          )}
+          <div className="space-y-4">
+            {filteredExercises.map((exercise) => (
+              <ExerciseCard
+                key={exercise.id}
+                exercise={exercise}
+                isAdmin={isAdmin}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            ))}
+          </div>
+        </>
       )}
     </div>
   )

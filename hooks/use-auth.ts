@@ -67,12 +67,19 @@ export function useAuth() {
     await supabase.auth.signOut()
   }
 
+  const refetchProfile = async () => {
+    if (user?.id) {
+      await fetchProfile(user.id)
+    }
+  }
+
   return {
     user,
     profile,
     loading,
     signOut,
     isAdmin: profile?.is_admin ?? false,
+    refetchProfile,
   }
 }
 

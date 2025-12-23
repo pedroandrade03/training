@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "@/hooks/use-auth"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -12,13 +12,18 @@ import { LogOut, Edit2, Check, X } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 
 export default function PerfilPage() {
-  const { user, profile, signOut } = useAuth()
+  const { user, profile, signOut, refetchProfile } = useAuth()
   const router = useRouter()
   const supabase = createClient()
   const queryClient = useQueryClient()
   const [isEditingName, setIsEditingName] = useState(false)
   const [editedName, setEditedName] = useState(profile?.name || "")
   const [isSaving, setIsSaving] = useState(false)
+
+  // Update editedName when profile changes
+  useEffect(() => {
+    setEditedName(profile?.name || "")
+  }, [profile?.name])
 
   const handleSignOut = async () => {
     await signOut()
@@ -37,9 +42,10 @@ export default function PerfilPage() {
 
       if (error) throw error
 
-      // Invalidate queries to refresh profile data
-      queryClient.invalidateQueries({ queryKey: ["profile", user.id] })
-      queryClient.invalidateQueries({ queryKey: ["auth"] })
+      // Refetch profile to update UI immediately
+      if (refetchProfile) {
+        await refetchProfile()
+      }
       
       setIsEditingName(false)
     } catch (error: any) {
