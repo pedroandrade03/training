@@ -1,37 +1,39 @@
 "use client"
 
+import { useCategories } from "@/hooks/use-exercises"
 import { Button } from "@/components/ui/button"
-import { EXERCISE_CATEGORIES, type ExerciseCategory } from "@/hooks/use-exercises"
 import { cn } from "@/lib/utils"
 
 interface CategoryFilterProps {
-  selectedCategory: ExerciseCategory
-  onCategoryChange: (category: ExerciseCategory) => void
+  selectedCategory: string
+  onSelectCategory: (category: string) => void
 }
 
 export function CategoryFilter({
   selectedCategory,
-  onCategoryChange,
+  onSelectCategory,
 }: CategoryFilterProps) {
+  const { data: categories = [] } = useCategories()
+
   return (
-    <div className="flex gap-2 overflow-x-auto pb-2">
+    <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
       <Button
-        variant={selectedCategory === null ? "default" : "outline"}
-        size="sm"
-        onClick={() => onCategoryChange(null)}
+        variant={selectedCategory === "all" ? "default" : "outline"}
+        onClick={() => onSelectCategory("all")}
         className="whitespace-nowrap"
+        size="sm"
       >
         Todos
       </Button>
-      {EXERCISE_CATEGORIES.map((category) => (
+      {categories.map((category) => (
         <Button
-          key={category.value}
-          variant={selectedCategory === category.value ? "default" : "outline"}
-          size="sm"
-          onClick={() => onCategoryChange(category.value)}
+          key={category.id}
+          variant={selectedCategory === category.name ? "default" : "outline"}
+          onClick={() => onSelectCategory(category.name)}
           className="whitespace-nowrap"
+          size="sm"
         >
-          {category.label}
+          {category.name}
         </Button>
       ))}
     </div>

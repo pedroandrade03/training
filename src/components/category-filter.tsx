@@ -1,6 +1,6 @@
 "use client"
 
-import { useCategories } from "@/hooks/use-exercises"
+import { useCategories } from "@/hooks/use-categories"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 

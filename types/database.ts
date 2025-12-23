@@ -71,7 +71,8 @@ export interface Database {
           id: string
           name: string
           suggested_reps: string
-          category: string | null -- Deprecated, keep for type compatibility until fully migrated
+          // Deprecated: category field kept for type compatibility until fully migrated
+          category: string | null
           created_by: string | null
           created_at: string
         }
