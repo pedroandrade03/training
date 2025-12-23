@@ -75,22 +75,22 @@ docker compose run --rm certbot certonly \
   -d www.$DOMAIN
 
 if [ $? -eq 0 ]; then
-    # Restaurar configuração completa do Nginx
-    if [ -f nginx/nginx.conf.backup ]; then
-        cp nginx/nginx.conf.backup nginx/nginx.conf
-    else
-        # Se não houver backup, usar a configuração completa do repositório
-        echo "⚠️  Backup não encontrado, usando configuração do repositório"
-    fi
+    # Atualizar nginx.conf para usar SSL
+    echo "🔄 Atualizando configuração do Nginx para usar SSL..."
+    cp nginx/nginx-ssl.conf nginx/nginx.conf
     
     # Reiniciar Nginx
     docker compose restart nginx
+    
+    # Aguardar Nginx reiniciar
+    sleep 5
     
     echo "✅ SSL configurado com sucesso!"
     echo "🌐 Acesse: https://$DOMAIN"
 else
     echo "❌ Erro ao obter certificado"
     echo "Verifique os logs: docker compose logs certbot"
+    echo "Mantendo configuração HTTP para tentar novamente depois"
     exit 1
 fi
 
