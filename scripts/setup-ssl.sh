@@ -20,21 +20,67 @@ fi
 # Substituir nginx.conf temporariamente pela versão HTTP
 cp nginx/nginx-http.conf nginx/nginx.conf
 
+# Remover containers órfãos (como postgres que foi removido)
+echo "🧹 Removendo containers órfãos..."
+docker compose down --remove-orphans 2>/dev/null || true
+
 # Iniciar Nginx temporariamente
 echo "📦 Iniciando Nginx temporariamente..."
 docker compose up -d nginx
 
 # Aguardar Nginx iniciar
-sleep 5
+echo "⏳ Aguardando Nginx iniciar..."
+sleep 10
+
+# Verificar se Nginx está rodando
+if ! docker compose ps nginx | grep -q "Up"; then
+    echo "❌ Erro: Nginx não está rodando. Verifique os logs:"
+    docker compose logs nginx
+    exit 1
+fi
+
+# Verificar se já existe certificado
+if [ -d "certbot/conf/live/$DOMAIN" ]; then
+    echo "⚠️  Certificado já existe em certbot/conf/live/$DOMAIN"
+    echo "   Para renovar, use: docker compose exec certbot certbot renew"
+    echo "   Ou remova o diretório: rm -rf certbot/conf/live/$DOMAIN"
+    read -p "Deseja continuar mesmo assim? (s/N): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Ss]$ ]]; then
+        exit 0
+    fi
+fi
 
 # Obter certificado SSL
 echo "🔐 Obtendo certificado SSL do Let's Encrypt..."
+echo "⚠️  Certifique-se de que o DNS está apontando para este servidor!"
+echo "   Domínio: $DOMAIN e www.$DOMAIN devem apontar para o IP: $(curl -s ifconfig.me 2>/dev/null || echo 'IP_DO_SERVIDOR')"
+echo ""
+
+# Testar acesso ao diretório de validação
+echo "🔍 Testando acesso ao diretório de validação..."
+TEST_FILE="test-$(date +%s).txt"
+echo "test" > certbot/www/$TEST_FILE
+sleep 2
+
+if curl -s "http://$DOMAIN/.well-known/acme-challenge/$TEST_FILE" 2>/dev/null | grep -q "test"; then
+    echo "✅ Diretório de validação está acessível"
+    rm -f certbot/www/$TEST_FILE
+else
+    echo "⚠️  Aviso: Não foi possível acessar o diretório de validação"
+    echo "   Isso pode indicar que o DNS não está configurado corretamente"
+    rm -f certbot/www/$TEST_FILE
+fi
+
+echo ""
+
 docker compose run --rm certbot certonly \
   --webroot \
   --webroot-path=/var/www/certbot \
   --email $EMAIL \
   --agree-tos \
   --no-eff-email \
+  --force-renewal \
   -d $DOMAIN \
   -d www.$DOMAIN
 
