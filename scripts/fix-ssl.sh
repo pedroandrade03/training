@@ -23,7 +23,8 @@ mkdir -p certbot/conf
 mkdir -p certbot/www
 
 # Usar configuração HTTP temporária
-cp nginx/nginx-http.conf nginx/nginx.conf
+# nginx.conf já está configurado para HTTP + Validação
+# cp nginx/nginx-http.conf nginx/nginx.conf # Removido, usando nginx.conf direto
 
 # Iniciar apenas Nginx
 echo "📦 Iniciando Nginx..."
