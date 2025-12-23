@@ -77,7 +77,8 @@ fi
 rm -rf certbot/conf/logs/* 2>/dev/null || true
 
 # Obter certificado novo (forçar, não renovar)
-docker compose run --rm certbot certonly \
+# Usamos --entrypoint para sobrescrever o loop de renovação definido no docker-compose.yml
+docker compose run --rm --entrypoint certbot certbot certonly \
   --webroot \
   --webroot-path=/var/www/certbot \
   --email pedroandrade202004@gmail.com \
