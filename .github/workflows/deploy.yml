@@ -1,0 +1,29 @@
+name: Deploy automático
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY_VPS }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H 185.169.252.100 >> ~/.ssh/known_hosts
+
+      - name: Deploy no servidor
+        run: |
+          ssh -i ~/.ssh/id_ed25519 root@185.169.252.100 << 'EOF'
+            cd training
+            git pull origin main
+            docker-compose -f docker-compose.prod.yml up -d --build
+          EOF
