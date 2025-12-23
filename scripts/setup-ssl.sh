@@ -42,26 +42,24 @@ fi
 # Verificar se já existe certificado
 if [ -d "certbot/conf/live/$DOMAIN" ]; then
     echo "⚠️  Certificado já existe em certbot/conf/live/$DOMAIN"
-    echo "   Para renovar, use: docker compose exec certbot certbot renew"
-    echo "   Ou remova o diretório: rm -rf certbot/conf/live/$DOMAIN"
-    read -p "Deseja continuar mesmo assim? (s/N): " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Ss]$ ]]; then
-        exit 0
-    fi
+    echo "   Removendo certificado existente para obter um novo..."
+    rm -rf certbot/conf/live/$DOMAIN
+    rm -rf certbot/conf/archive/$DOMAIN
+    rm -rf certbot/conf/renewal/$DOMAIN.conf
 fi
 
 # Obter certificado SSL
 echo "🔐 Obtendo certificado SSL do Let's Encrypt..."
 echo "⚠️  Certifique-se de que o DNS está apontando para este servidor!"
-echo "   Domínio: $DOMAIN e www.$DOMAIN devem apontar para o IP: $(curl -s ifconfig.me 2>/dev/null || echo 'IP_DO_SERVIDOR')"
+SERVER_IP=$(curl -s ifconfig.me 2>/dev/null || echo "IP_DO_SERVIDOR")
+echo "   Domínio: $DOMAIN e www.$DOMAIN devem apontar para o IP: $SERVER_IP"
 echo ""
 
 # Testar acesso ao diretório de validação
 echo "🔍 Testando acesso ao diretório de validação..."
 TEST_FILE="test-$(date +%s).txt"
 echo "test" > certbot/www/$TEST_FILE
-sleep 2
+sleep 3
 
 if curl -s "http://$DOMAIN/.well-known/acme-challenge/$TEST_FILE" 2>/dev/null | grep -q "test"; then
     echo "✅ Diretório de validação está acessível"
@@ -69,18 +67,20 @@ if curl -s "http://$DOMAIN/.well-known/acme-challenge/$TEST_FILE" 2>/dev/null | 
 else
     echo "⚠️  Aviso: Não foi possível acessar o diretório de validação"
     echo "   Isso pode indicar que o DNS não está configurado corretamente"
+    echo "   Teste manualmente: curl http://$DOMAIN/.well-known/acme-challenge/$TEST_FILE"
     rm -f certbot/www/$TEST_FILE
 fi
 
 echo ""
 
+# Obter certificado SSL
+echo "📝 Executando certbot para obter certificado..."
 docker compose run --rm certbot certonly \
   --webroot \
   --webroot-path=/var/www/certbot \
   --email $EMAIL \
   --agree-tos \
   --no-eff-email \
-  --force-renewal \
   -d $DOMAIN \
   -d www.$DOMAIN
 
