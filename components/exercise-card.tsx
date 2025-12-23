@@ -3,7 +3,9 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useWorkoutLogs } from "@/hooks/use-workout-logs"
+import { useCardioLogs } from "@/hooks/use-cardio-logs"
 import { QuickLogDrawer } from "./quick-log-drawer"
+import { CardioLogDrawer } from "./cardio-log-drawer"
 import { Edit, Trash2 } from "lucide-react"
 import { useState } from "react"
 import type { Exercise } from "@/hooks/use-exercises"
@@ -21,10 +23,16 @@ export function ExerciseCard({
   onEdit,
   onDelete,
 }: ExerciseCardProps) {
+  const isCardio = exercise.exercise_type === 'cardio'
   const { getPR, getLastWorkout } = useWorkoutLogs()
+  const { logs: cardioLogs, isLoading: cardioLogsLoading } = useCardioLogs(isCardio ? exercise.id : undefined)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
-  const pr = getPR(exercise.id)
-  const lastWorkout = getLastWorkout(exercise.id)
+  
+  const pr = isCardio ? null : getPR(exercise.id)
+  const lastWorkout = isCardio ? null : getLastWorkout(exercise.id)
+  
+  // Get last cardio workout
+  const lastCardioWorkout = isCardio && !cardioLogsLoading && cardioLogs.length > 0 ? cardioLogs[0] : null
 
   return (
     <>
@@ -79,7 +87,41 @@ export function ExerciseCard({
           </div>
         </CardHeader>
         <CardContent>
-          {pr !== null ? (
+          {isCardio ? (
+            lastCardioWorkout ? (
+              <div className="space-y-3">
+                <div className="rounded-lg bg-primary/10 p-4">
+                  <p className="text-sm text-muted-foreground">Último Treino</p>
+                  <div className="mt-2 space-y-1 text-sm">
+                    <p className="font-semibold text-primary">
+                      {lastCardioWorkout.duration_minutes} minutos
+                    </p>
+                    {lastCardioWorkout.speed && (
+                      <p className="text-muted-foreground">
+                        Velocidade: {lastCardioWorkout.speed} km/h
+                      </p>
+                    )}
+                    {lastCardioWorkout.resistance && (
+                      <p className="text-muted-foreground">
+                        Resistência: {lastCardioWorkout.resistance}
+                      </p>
+                    )}
+                    {lastCardioWorkout.incline && (
+                      <p className="text-muted-foreground">
+                        Inclinação: {lastCardioWorkout.incline}%
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-lg bg-muted p-4">
+                <p className="text-sm text-muted-foreground">
+                  Nenhum registro ainda
+                </p>
+              </div>
+            )
+          ) : pr !== null ? (
             <div className="space-y-3">
               <div className="rounded-lg bg-primary/10 p-4">
                 <p className="text-sm text-muted-foreground">Recorde Pessoal</p>
@@ -128,12 +170,20 @@ export function ExerciseCard({
           </Button>
         </CardFooter>
       </Card>
-      <QuickLogDrawer
-        exercise={exercise}
-        isOpen={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
-        currentPR={pr}
-      />
+      {isCardio ? (
+        <CardioLogDrawer
+          exercise={exercise}
+          isOpen={isDrawerOpen}
+          onClose={() => setIsDrawerOpen(false)}
+        />
+      ) : (
+        <QuickLogDrawer
+          exercise={exercise}
+          isOpen={isDrawerOpen}
+          onClose={() => setIsDrawerOpen(false)}
+          currentPR={pr}
+        />
+      )}
     </>
   )
 }

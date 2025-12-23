@@ -71,6 +71,7 @@ export interface Database {
           id: string
           name: string
           suggested_reps: string
+          exercise_type: string
           // Deprecated: category field kept for type compatibility until fully migrated
           category: string | null
           created_by: string | null
@@ -80,6 +81,7 @@ export interface Database {
           id?: string
           name: string
           suggested_reps: string
+          exercise_type?: string
           category?: string | null
           created_by?: string | null
           created_at?: string
@@ -88,8 +90,38 @@ export interface Database {
           id?: string
           name?: string
           suggested_reps?: string
+          exercise_type?: string
           category?: string | null
           created_by?: string | null
+          created_at?: string
+        }
+      }
+      cardio_logs: {
+        Row: {
+          id: string
+          workout_log_id: string
+          duration_minutes: number
+          speed: number | null
+          resistance: number | null
+          incline: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          workout_log_id: string
+          duration_minutes: number
+          speed?: number | null
+          resistance?: number | null
+          incline?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          workout_log_id?: string
+          duration_minutes?: number
+          speed?: number | null
+          resistance?: number | null
+          incline?: number | null
           created_at?: string
         }
       }
@@ -179,6 +211,7 @@ export interface Database {
           id: string
           name: string
           suggested_reps: string
+          exercise_type: string
           created_by: string
           created_at: string
           categories: Json

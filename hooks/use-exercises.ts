@@ -12,6 +12,7 @@ export interface Exercise {
   id: string
   name: string
   suggested_reps: string
+  exercise_type: 'strength' | 'cardio'
   // category is deprecated but kept for compatibility with UI that hasn't been updated yet
   // logic should prioritize `categories`
   category: string | null 
@@ -79,6 +80,7 @@ export function useExercises() {
         id: row.id,
         name: row.name,
         suggested_reps: row.suggested_reps,
+        exercise_type: row.exercise_type || 'strength',
         created_by: row.created_by,
         created_at: row.created_at,
         category: null, // Deprecated
@@ -144,6 +146,7 @@ export function useExercises() {
     mutationFn: async (exercise: { 
       name: string
       suggested_reps: string
+      exercise_type?: 'strength' | 'cardio'
       category_ids?: string[] // Changed from category string
       assigned_user_ids?: string[]
     }) => {
@@ -158,6 +161,7 @@ export function useExercises() {
         .insert({
           name: exercise.name,
           suggested_reps: exercise.suggested_reps,
+          exercise_type: exercise.exercise_type || 'strength',
           created_by: user.id,
         })
         .select()
@@ -211,6 +215,7 @@ export function useExercises() {
       id: string
       name?: string
       suggested_reps?: string
+      exercise_type?: 'strength' | 'cardio'
       category_ids?: string[]
       assigned_user_ids?: string[]
     }) => {

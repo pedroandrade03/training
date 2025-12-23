@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth-provider";
+import { PWARegister } from "@/components/pwa-register";
+import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,6 +18,26 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Trainally",
   description: "Acompanhe sua progressão de carga na academia",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Trainally",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  openGraph: {
+    type: "website",
+    siteName: "Trainally",
+    title: "Trainally",
+    description: "Acompanhe sua progressão de carga na academia",
+  },
+  twitter: {
+    card: "summary",
+    title: "Trainally",
+    description: "Acompanhe sua progressão de carga na academia",
+  },
 };
 
 export const viewport: Viewport = {
@@ -23,6 +45,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  themeColor: "#0a0a0a",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -35,7 +59,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <PWARegister />
         <AuthProvider>{children}</AuthProvider>
+        <PWAInstallPrompt />
       </body>
     </html>
   );

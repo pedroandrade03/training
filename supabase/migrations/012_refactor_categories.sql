@@ -83,6 +83,7 @@ RETURNS TABLE (
   id UUID,
   name TEXT,
   suggested_reps TEXT,
+  exercise_type TEXT,
   created_by UUID,
   created_at TIMESTAMP WITH TIME ZONE,
   categories JSONB,
@@ -94,6 +95,7 @@ BEGIN
     e.id,
     e.name,
     e.suggested_reps,
+    COALESCE(e.exercise_type, 'strength')::TEXT as exercise_type,
     e.created_by,
     e.created_at,
     COALESCE(
@@ -108,7 +110,7 @@ BEGIN
   LEFT JOIN exercise_categories ec ON ec.exercise_id = e.id
   LEFT JOIN categories c ON c.id = ec.category_id
   LEFT JOIN exercise_assignments ea ON ea.exercise_id = e.id
-  GROUP BY e.id;
+  GROUP BY e.id, e.exercise_type;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

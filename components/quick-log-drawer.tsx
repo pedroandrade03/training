@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Drawer,
   DrawerClose,
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/drawer"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useWorkoutLogs } from "@/hooks/use-workout-logs"
+import { useWorkoutLogs, type WorkoutLog } from "@/hooks/use-workout-logs"
 import type { Exercise } from "@/hooks/use-exercises"
 import { Plus, Trash2 } from "lucide-react"
 
@@ -20,7 +20,8 @@ interface QuickLogDrawerProps {
   exercise: Exercise
   isOpen: boolean
   onClose: () => void
-  currentPR: number | null
+  currentPR?: number | null
+  editingLogId?: string | null
 }
 
 interface WorkoutSet {
@@ -35,12 +36,13 @@ export function QuickLogDrawer({
   isOpen,
   onClose,
   currentPR,
+  editingLogId = null,
 }: QuickLogDrawerProps) {
   const [sets, setSets] = useState<WorkoutSet[]>([
     { set_number: 1, weight: "", reps: "", assisted: false },
   ])
   const [loading, setLoading] = useState(false)
-  const { createLog } = useWorkoutLogs()
+  const { createLog, updateLog, logs } = useWorkoutLogs()
 
   const handleAddSet = () => {
     setSets([
@@ -71,6 +73,36 @@ export function QuickLogDrawer({
     setSets(newSets)
   }
 
+  // Load existing log data when editing
+  useEffect(() => {
+    if (editingLogId && isOpen) {
+      const logToEdit = logs.find(l => l.id === editingLogId)
+      if (logToEdit && logToEdit.workout_sets && logToEdit.workout_sets.length > 0) {
+        setSets(
+          logToEdit.workout_sets
+            .sort((a, b) => a.set_number - b.set_number)
+            .map(set => ({
+              set_number: set.set_number,
+              weight: set.weight.toString(),
+              reps: set.reps.toString(),
+              assisted: set.assisted,
+            }))
+        )
+      } else if (logToEdit) {
+        // Old format: single set
+        setSets([{
+          set_number: 1,
+          weight: logToEdit.weight.toString(),
+          reps: logToEdit.reps.toString(),
+          assisted: false,
+        }])
+      }
+    } else if (!isOpen) {
+      // Reset when drawer closes
+      setSets([{ set_number: 1, weight: "", reps: "", assisted: false }])
+    }
+  }, [editingLogId, isOpen, logs])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -86,20 +118,29 @@ export function QuickLogDrawer({
 
     setLoading(true)
     try {
-      await createLog({
-        exercise_id: exercise.id,
-        sets: sets.map((set) => ({
-          set_number: set.set_number,
-          weight: parseFloat(set.weight),
-          reps: parseInt(set.reps),
-          assisted: set.assisted,
-        })),
-      })
+      const setsData = sets.map((set) => ({
+        set_number: set.set_number,
+        weight: parseFloat(set.weight),
+        reps: parseInt(set.reps),
+        assisted: set.assisted,
+      }))
+
+      if (editingLogId) {
+        await updateLog({
+          logId: editingLogId,
+          sets: setsData,
+        })
+      } else {
+        await createLog({
+          exercise_id: exercise.id,
+          sets: setsData,
+        })
+      }
       // Reset form
       setSets([{ set_number: 1, weight: "", reps: "", assisted: false }])
       onClose()
     } catch (error) {
-      console.error("Error creating log:", error)
+      console.error("Error saving log:", error)
       alert("Erro ao salvar treino")
     } finally {
       setLoading(false)
@@ -110,9 +151,13 @@ export function QuickLogDrawer({
     <Drawer open={isOpen} onOpenChange={onClose}>
       <DrawerContent className="max-h-[90vh]">
         <DrawerHeader className="sticky top-0 z-10 bg-background">
-          <DrawerTitle>{exercise.name}</DrawerTitle>
+          <DrawerTitle>
+            {editingLogId ? "Editar" : "Registrar"} {exercise.name}
+          </DrawerTitle>
           <DrawerDescription>
-            Registre todas as séries realizadas hoje
+            {editingLogId 
+              ? "Edite suas séries e cargas" 
+              : "Registre todas as séries realizadas hoje"}
           </DrawerDescription>
           {currentPR !== null && (
             <div className="mt-2 rounded-lg bg-muted p-3">
@@ -207,7 +252,7 @@ export function QuickLogDrawer({
 
           <DrawerFooter className="sticky bottom-0 bg-background">
             <Button type="submit" size="lg" disabled={loading}>
-              {loading ? "Salvando..." : "Salvar Treino"}
+              {loading ? "Salvando..." : editingLogId ? "Atualizar" : "Salvar Treino"}
             </Button>
             <DrawerClose asChild>
               <Button variant="outline" size="lg" disabled={loading}>

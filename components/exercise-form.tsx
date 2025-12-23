@@ -14,6 +14,7 @@ interface ExerciseFormProps {
   onSubmit: (data: { 
     name: string
     suggested_reps: string
+    exercise_type?: 'strength' | 'cardio'
     category_ids?: string[]
     assigned_user_ids?: string[]
   }) => Promise<void>
@@ -29,6 +30,7 @@ export function ExerciseForm({
 }: ExerciseFormProps) {
   const [name, setName] = useState("")
   const [suggestedReps, setSuggestedReps] = useState("")
+  const [exerciseType, setExerciseType] = useState<'strength' | 'cardio'>('strength')
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([])
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
   
@@ -39,6 +41,7 @@ export function ExerciseForm({
     if (exercise) {
       setName(exercise.name)
       setSuggestedReps(exercise.suggested_reps)
+      setExerciseType(exercise.exercise_type || 'strength')
       // Set selected categories from exercise.categories
       if (exercise.categories) {
         setSelectedCategoryIds(exercise.categories.map(c => c.id))
@@ -57,6 +60,7 @@ export function ExerciseForm({
     } else {
       setName("")
       setSuggestedReps("")
+      setExerciseType('strength')
       setSelectedCategoryIds([])
       setSelectedUserIds([])
     }
@@ -80,16 +84,18 @@ export function ExerciseForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name || !suggestedReps) return
+    if (!name || (!suggestedReps && exerciseType === 'strength')) return
     await onSubmit({ 
       name, 
-      suggested_reps: suggestedReps, 
+      suggested_reps: suggestedReps || (exerciseType === 'cardio' ? 'Tempo: minutos' : ''),
+      exercise_type: exerciseType,
       category_ids: selectedCategoryIds,
       assigned_user_ids: selectedUserIds.length > 0 ? selectedUserIds : undefined
     })
     if (!exercise) {
       setName("")
       setSuggestedReps("")
+      setExerciseType('strength')
       setSelectedCategoryIds([])
       setSelectedUserIds([])
     }
@@ -116,18 +122,36 @@ export function ExerciseForm({
             />
           </div>
           <div className="space-y-2">
-            <label htmlFor="reps" className="text-sm font-medium">
-              Repetições Sugeridas
+            <label htmlFor="exercise_type" className="text-sm font-medium">
+              Tipo de Exercício
             </label>
-            <Input
-              id="reps"
-              placeholder="Ex: 3x10 ou 4x8-12"
-              value={suggestedReps}
-              onChange={(e) => setSuggestedReps(e.target.value)}
-              required
+            <select
+              id="exercise_type"
+              value={exerciseType}
+              onChange={(e) => setExerciseType(e.target.value as 'strength' | 'cardio')}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={isLoading}
-            />
+            >
+              <option value="strength">Força</option>
+              <option value="cardio">Cardio</option>
+            </select>
           </div>
+
+          {exerciseType === 'strength' && (
+            <div className="space-y-2">
+              <label htmlFor="reps" className="text-sm font-medium">
+                Repetições Sugeridas
+              </label>
+              <Input
+                id="reps"
+                placeholder="Ex: 3x10 ou 4x8-12"
+                value={suggestedReps}
+                onChange={(e) => setSuggestedReps(e.target.value)}
+                required
+                disabled={isLoading}
+              />
+            </div>
+          )}
           
           {/* Categories Section */}
           <div className="space-y-2">

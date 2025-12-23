@@ -11,6 +11,7 @@ import Image from "next/image"
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [name, setName] = useState("")
   const [isSignUp, setIsSignUp] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -27,11 +28,17 @@ export default function LoginPage() {
         const { error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            data: {
+              name: name.trim() || undefined,
+            },
+          },
         })
         if (error) throw error
         // After signup, redirect to login
         setIsSignUp(false)
         setError(null)
+        setName("")
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -73,6 +80,17 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {isSignUp && (
+              <div className="space-y-2">
+                <Input
+                  type="text"
+                  placeholder="Nome"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+            )}
             <div className="space-y-2">
               <Input
                 type="email"
@@ -109,6 +127,7 @@ export default function LoginPage() {
               onClick={() => {
                 setIsSignUp(!isSignUp)
                 setError(null)
+                setName("")
               }}
               disabled={loading}
             >

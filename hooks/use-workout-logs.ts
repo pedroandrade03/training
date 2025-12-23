@@ -165,10 +165,116 @@ export function useWorkoutLogs(exerciseId?: string) {
     }
   }
 
+  const updateMutation = useMutation({
+    mutationFn: async ({
+      logId,
+      sets,
+    }: {
+      logId: string
+      sets: Array<{
+        set_number: number
+        weight: number
+        reps: number
+        assisted: boolean
+      }>
+    }) => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
+      // Verify ownership
+      const { data: existingLog } = await supabase
+        .from("workout_logs")
+        .select("user_id")
+        .eq("id", logId)
+        .single()
+
+      if (!existingLog || existingLog.user_id !== user.id) {
+        throw new Error("Not authorized to update this log")
+      }
+
+      // Calculate average weight and total reps for backward compatibility
+      const avgWeight = sets.reduce((sum, set) => sum + set.weight, 0) / sets.length
+      const totalReps = sets.reduce((sum, set) => sum + set.reps, 0)
+
+      // Update workout log
+      const { error: logError } = await supabase
+        .from("workout_logs")
+        .update({
+          weight: avgWeight,
+          reps: totalReps,
+        })
+        .eq("id", logId)
+
+      if (logError) throw logError
+
+      // Delete existing sets
+      await supabase.from("workout_sets").delete().eq("workout_log_id", logId)
+
+      // Create new sets
+      const setsToInsert = sets.map((set) => ({
+        workout_log_id: logId,
+        set_number: set.set_number,
+        weight: set.weight,
+        reps: set.reps,
+        assisted: set.assisted,
+      }))
+
+      const { error: setsError } = await supabase
+        .from("workout_sets")
+        .insert(setsToInsert)
+
+      if (setsError) throw setsError
+
+      // Fetch updated log
+      const { data: updatedLog, error: fetchError } = await supabase
+        .from("workout_logs")
+        .select("*, workout_sets(*)")
+        .eq("id", logId)
+        .single()
+
+      if (fetchError) throw fetchError
+      return updatedLog as WorkoutLog
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["workout_logs"] })
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: async (logId: string) => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
+      // Verify ownership
+      const { data: existingLog } = await supabase
+        .from("workout_logs")
+        .select("user_id")
+        .eq("id", logId)
+        .single()
+
+      if (!existingLog || existingLog.user_id !== user.id) {
+        throw new Error("Not authorized to delete this log")
+      }
+
+      // Delete workout log (cascade will delete sets and cardio_logs)
+      const { error } = await supabase.from("workout_logs").delete().eq("id", logId)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["workout_logs"] })
+    },
+  })
+
   return {
     logs,
     isLoading,
     createLog: createMutation.mutateAsync,
+    updateLog: updateMutation.mutateAsync,
+    deleteLog: deleteMutation.mutateAsync,
     getPR,
     getLastWorkout,
   }
