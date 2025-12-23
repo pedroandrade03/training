@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Aplicação Next.js
   app:
@@ -20,8 +18,6 @@ services:
     env_file:
       - .env.local
     restart: unless-stopped
-    depends_on:
-      - postgres
     networks:
       - trainally-network
 
@@ -53,32 +49,6 @@ services:
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
     networks:
       - trainally-network
-
-  # PostgreSQL Database (opcional - use se não estiver usando Supabase Cloud)
-  postgres:
-    image: postgres:16-alpine
-    container_name: trainally-postgres
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER:-trainally}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-trainally_password}
-      - POSTGRES_DB=${POSTGRES_DB:-trainally}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./supabase/migrations:/docker-entrypoint-initdb.d
-    restart: unless-stopped
-    networks:
-      - trainally-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-trainally}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-volumes:
-  postgres_data:
-    driver: local
 
 networks:
   trainally-network:
