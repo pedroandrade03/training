@@ -9,6 +9,37 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      categories: {
+        Row: {
+          id: string
+          name: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          created_at?: string
+        }
+      }
+      exercise_categories: {
+        Row: {
+          exercise_id: string
+          category_id: string
+        }
+        Insert: {
+          exercise_id: string
+          category_id: string
+        }
+        Update: {
+          exercise_id?: string
+          category_id?: string
+        }
+      }
       profiles: {
         Row: {
           id: string
@@ -40,7 +71,7 @@ export interface Database {
           id: string
           name: string
           suggested_reps: string
-          category: string | null
+          category: string | null -- Deprecated, keep for type compatibility until fully migrated
           created_by: string | null
           created_at: string
         }
@@ -139,30 +170,20 @@ export interface Database {
           created_at?: string
         }
       }
-      exercise_preferences: {
-        Row: {
+    }
+    Functions: {
+      get_exercises_with_categories: {
+        Args: Record<string, never>
+        Returns: {
           id: string
-          user_id: string
-          exercise_id: string
-          is_hidden: boolean
+          name: string
+          suggested_reps: string
+          created_by: string
           created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          exercise_id: string
-          is_hidden?: boolean
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          exercise_id?: string
-          is_hidden?: boolean
-          created_at?: string
-        }
+          categories: Json
+          assigned_user_ids: string[]
+        }[]
       }
     }
   }
 }
-

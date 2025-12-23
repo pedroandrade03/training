@@ -4,8 +4,8 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import type { Exercise, ExerciseCategory } from "@/hooks/use-exercises"
-import { EXERCISE_CATEGORIES } from "@/hooks/use-exercises"
+import type { Exercise } from "@/hooks/use-exercises"
+import { useCategories } from "@/hooks/use-exercises"
 import { useUsers } from "@/hooks/use-users"
 import { Loader2 } from "lucide-react"
 
@@ -14,7 +14,7 @@ interface ExerciseFormProps {
   onSubmit: (data: { 
     name: string
     suggested_reps: string
-    category?: string | null
+    category_ids?: string[]
     assigned_user_ids?: string[]
   }) => Promise<void>
   onCancel: () => void
@@ -29,15 +29,23 @@ export function ExerciseForm({
 }: ExerciseFormProps) {
   const [name, setName] = useState("")
   const [suggestedReps, setSuggestedReps] = useState("")
-  const [category, setCategory] = useState<ExerciseCategory>(null)
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([])
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
+  
+  const { data: categories = [], isLoading: categoriesLoading } = useCategories()
   const { users, isLoading: usersLoading } = useUsers()
 
   useEffect(() => {
     if (exercise) {
       setName(exercise.name)
       setSuggestedReps(exercise.suggested_reps)
-      setCategory(exercise.category as ExerciseCategory || null)
+      // Set selected categories from exercise.categories
+      if (exercise.categories) {
+        setSelectedCategoryIds(exercise.categories.map(c => c.id))
+      } else {
+        setSelectedCategoryIds([])
+      }
+      
       // Get assigned user IDs
       if (exercise.exercise_assignments) {
         setSelectedUserIds(
@@ -47,6 +55,9 @@ export function ExerciseForm({
         setSelectedUserIds([])
       }
     } else {
+      setName("")
+      setSuggestedReps("")
+      setSelectedCategoryIds([])
       setSelectedUserIds([])
     }
   }, [exercise])
@@ -59,19 +70,27 @@ export function ExerciseForm({
     )
   }
 
+  const handleToggleCategory = (categoryId: string) => {
+    setSelectedCategoryIds((prev) =>
+      prev.includes(categoryId)
+        ? prev.filter((id) => id !== categoryId)
+        : [...prev, categoryId]
+    )
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name || !suggestedReps) return
     await onSubmit({ 
       name, 
       suggested_reps: suggestedReps, 
-      category,
+      category_ids: selectedCategoryIds,
       assigned_user_ids: selectedUserIds.length > 0 ? selectedUserIds : undefined
     })
     if (!exercise) {
       setName("")
       setSuggestedReps("")
-      setCategory(null)
+      setSelectedCategoryIds([])
       setSelectedUserIds([])
     }
   }
@@ -109,25 +128,37 @@ export function ExerciseForm({
               disabled={isLoading}
             />
           </div>
+          
+          {/* Categories Section */}
           <div className="space-y-2">
-            <label htmlFor="category" className="text-sm font-medium">
-              Categoria
+            <label className="text-sm font-medium">
+              Categorias
             </label>
-            <select
-              id="category"
-              value={category || ""}
-              onChange={(e) => setCategory(e.target.value as ExerciseCategory || null)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={isLoading}
-            >
-              <option value="">Sem categoria</option>
-              {EXERCISE_CATEGORIES.map((cat) => (
-                <option key={cat.value} value={cat.value}>
-                  {cat.label}
-                </option>
-              ))}
-            </select>
+            {categoriesLoading ? (
+               <div className="flex items-center justify-center py-2">
+                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+               </div>
+            ) : (
+              <div className="flex flex-wrap gap-2 rounded-md border border-input p-3">
+                {categories.map((cat) => (
+                  <label
+                    key={cat.id}
+                    className="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-1.5 hover:bg-muted"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedCategoryIds.includes(cat.id)}
+                      onChange={() => handleToggleCategory(cat.id)}
+                      disabled={isLoading}
+                      className="h-4 w-4 rounded border-input"
+                    />
+                    <span className="text-sm">{cat.name}</span>
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
+
           <div className="space-y-2">
             <label className="text-sm font-medium">
               Atribuir para (deixe vazio para todos)
@@ -193,4 +224,3 @@ export function ExerciseForm({
     </Card>
   )
 }
-

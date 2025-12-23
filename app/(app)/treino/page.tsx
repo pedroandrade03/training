@@ -1,25 +1,27 @@
 "use client"
 
 import { useState } from "react"
-import { useExercises, type ExerciseCategory } from "@/hooks/use-exercises"
+import { useExercises } from "@/hooks/use-exercises"
 import { useAuth } from "@/hooks/use-auth"
 import { ExerciseCard } from "@/components/exercise-card"
 import { CategoryFilter } from "@/components/category-filter"
 import { Loader2 } from "lucide-react"
 
 export default function TreinoPage() {
-  const { exercises, isLoading, updateExercise, deleteExercise } = useExercises()
+  const { exercises, isLoading, deleteExercise } = useExercises()
   const { isAdmin } = useAuth()
-  const [selectedCategory, setSelectedCategory] = useState<ExerciseCategory>(null)
+  const [selectedCategory, setSelectedCategory] = useState<string>("all")
 
-  // Filter exercises by category
-  const filteredExercises = selectedCategory
-    ? exercises.filter((exercise) => exercise.category === selectedCategory)
-    : exercises
+  // Filter exercises by category (checking if exercise has the selected category in its list)
+  const filteredExercises = selectedCategory === "all"
+    ? exercises
+    : exercises.filter((exercise) => 
+        exercise.categories.some(cat => cat.name === selectedCategory)
+      )
 
   const handleEdit = async (exercise: any) => {
-    // This will be handled by the admin page
-    // For now, we'll just show the exercise card with edit buttons
+    // This will be handled by the admin page logic if integrated, or via modal
+    console.log("Edit requested for", exercise.id)
   }
 
   const handleDelete = async (id: string) => {
@@ -49,12 +51,12 @@ export default function TreinoPage() {
           Selecione um exercício para registrar sua carga
         </p>
       </div>
-      {exercises.length > 0 && (
-        <CategoryFilter
-          selectedCategory={selectedCategory}
-          onCategoryChange={setSelectedCategory}
-        />
-      )}
+      
+      <CategoryFilter
+        selectedCategory={selectedCategory}
+        onSelectCategory={setSelectedCategory}
+      />
+      
       {exercises.length === 0 ? (
         <div className="flex min-h-[400px] items-center justify-center rounded-lg border border-dashed">
           <div className="text-center">
@@ -72,7 +74,7 @@ export default function TreinoPage() {
         <div className="flex min-h-[400px] items-center justify-center rounded-lg border border-dashed">
           <div className="text-center">
             <p className="text-muted-foreground">
-              Nenhum exercício encontrado nesta categoria.
+              Nenhum exercício encontrado na categoria "{selectedCategory}".
             </p>
           </div>
         </div>
@@ -92,4 +94,3 @@ export default function TreinoPage() {
     </div>
   )
 }
-

@@ -11,25 +11,22 @@ import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import type { Exercise } from "@/hooks/use-exercises"
 
-// Force dynamic rendering to avoid build-time prerender errors
 export const dynamic = 'force-dynamic'
 
 export default function AdminPage() {
-  const { exercises, isLoading, createExercise, updateExercise, deleteExercise } =
-    useExercises()
+  const { exercises, isLoading, createExercise, updateExercise, deleteExercise, updateAssignments } = useExercises()
   const { isAdmin, loading: authLoading } = useAuth()
-  const router = useRouter()
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null)
-  const [showForm, setShowForm] = useState(false)
-  const [formLoading, setFormLoading] = useState(false)
+  const [isFormOpen, setIsFormOpen] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
       router.push("/treino")
     }
-  }, [isAdmin, authLoading, router])
+  }, [authLoading, isAdmin, router])
 
-  if (authLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center p-4">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -37,44 +34,28 @@ export default function AdminPage() {
     )
   }
 
-  if (!isAdmin) {
-    return null
-  }
+  if (!isAdmin) return null
 
-  const handleCreate = async (data: { 
+  const handleSubmit = async (data: { 
     name: string
     suggested_reps: string
-    category?: string | null
+    category_ids?: string[]
     assigned_user_ids?: string[]
   }) => {
-    setFormLoading(true)
     try {
-      await createExercise(data)
-      setShowForm(false)
-    } catch (error) {
-      console.error("Error creating exercise:", error)
-      alert("Erro ao criar exercício")
-    } finally {
-      setFormLoading(false)
-    }
-  }
-
-  const handleUpdate = async (data: { 
-    name: string
-    suggested_reps: string
-    category?: string | null
-    assigned_user_ids?: string[]
-  }) => {
-    if (!editingExercise) return
-    setFormLoading(true)
-    try {
-      await updateExercise({ id: editingExercise.id, ...data })
+      if (editingExercise) {
+        await updateExercise({
+          id: editingExercise.id,
+          ...data,
+        })
+      } else {
+        await createExercise(data)
+      }
+      setIsFormOpen(false)
       setEditingExercise(null)
     } catch (error) {
-      console.error("Error updating exercise:", error)
-      alert("Erro ao atualizar exercício")
-    } finally {
-      setFormLoading(false)
+      console.error("Error saving exercise:", error)
+      alert("Erro ao salvar exercício")
     }
   }
 
@@ -89,117 +70,95 @@ export default function AdminPage() {
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-4">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    )
-  }
-
   return (
-    <div className="container mx-auto space-y-4 p-4 pb-24">
-      <div className="mb-6 flex items-center justify-between">
+    <div className="container mx-auto space-y-6 p-4 pb-24">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Gerenciar Exercícios</h1>
-          <p className="mt-2 text-muted-foreground">
-            Crie e edite exercícios disponíveis para todos os usuários
-          </p>
+          <h1 className="text-3xl font-bold">Admin</h1>
+          <p className="text-muted-foreground">Gerenciar exercícios</p>
         </div>
-        <Button
-          onClick={() => {
-            setShowForm(true)
-            setEditingExercise(null)
-          }}
-          size="lg"
-        >
+        <Button onClick={() => {
+          setEditingExercise(null)
+          setIsFormOpen(true)
+        }}>
           <Plus className="mr-2 h-4 w-4" />
           Novo Exercício
         </Button>
       </div>
 
-      {(showForm || editingExercise) && (
-        <ExerciseForm
-          exercise={editingExercise}
-          onSubmit={editingExercise ? handleUpdate : handleCreate}
-          onCancel={() => {
-            setShowForm(false)
-            setEditingExercise(null)
-          }}
-          isLoading={formLoading}
-        />
+      {isFormOpen && (
+        <div className="mb-6">
+          <ExerciseForm
+            exercise={editingExercise}
+            onSubmit={handleSubmit}
+            onCancel={() => {
+              setIsFormOpen(false)
+              setEditingExercise(null)
+            }}
+          />
+        </div>
       )}
 
-      <div className="space-y-4">
-        {exercises.length === 0 ? (
-          <div className="flex min-h-[400px] items-center justify-center rounded-lg border border-dashed">
-            <div className="text-center">
-              <p className="text-muted-foreground">
-                Nenhum exercício cadastrado ainda.
-              </p>
-            </div>
-          </div>
-        ) : (
-          exercises.map((exercise) => (
-            <Card key={exercise.id}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-xl">{exercise.name}</CardTitle>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Repetições sugeridas: {exercise.suggested_reps}
-                    </p>
-                    {exercise.exercise_assignments &&
-                      exercise.exercise_assignments.length > 0 && (
-                        <div className="mt-2">
-                          <p className="text-xs text-muted-foreground">
-                            Atribuído para:{" "}
-                            {exercise.exercise_assignments
-                              .map(
-                                (assignment) =>
-                                  assignment.profiles?.name ||
-                                  assignment.profiles?.email ||
-                                  "Usuário"
-                              )
-                              .join(", ")}
-                          </p>
-                        </div>
-                      )}
-                    {(!exercise.exercise_assignments ||
-                      exercise.exercise_assignments.length === 0) && (
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        Disponível para todos
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        setEditingExercise(exercise)
-                        setShowForm(false)
-                      }}
-                      className="h-10 w-10"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(exercise.id)}
-                      className="h-10 w-10 text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+      <div className="grid gap-4">
+        {exercises.map((exercise) => (
+          <Card key={exercise.id}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <div className="space-y-1">
+                <CardTitle className="text-base font-medium">
+                  {exercise.name}
+                </CardTitle>
+                <div className="flex flex-wrap gap-1">
+                  {exercise.categories?.map(cat => (
+                    <span key={cat.id} className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                      {cat.name}
+                    </span>
+                  ))}
                 </div>
-              </CardHeader>
-            </Card>
-          ))
-        )}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setEditingExercise(exercise)
+                    setIsFormOpen(true)
+                    window.scrollTo({ top: 0, behavior: "smooth" })
+                  }}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDelete(exercise.id)}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-muted-foreground">
+                <p>Repetições: {exercise.suggested_reps}</p>
+                {exercise.exercise_assignments && exercise.exercise_assignments.length > 0 ? (
+                  <div className="mt-2">
+                    <p className="font-medium text-foreground">Atribuído para:</p>
+                    <ul className="list-inside list-disc">
+                      {exercise.exercise_assignments.map((assignment) => (
+                        <li key={assignment.user_id}>
+                          {assignment.profiles?.name || assignment.profiles?.email || "Usuário"}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  <p className="mt-2 text-xs italic">Disponível para todos</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </div>
   )
 }
-

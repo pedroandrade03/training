@@ -32,20 +32,32 @@ export function ExerciseCard({
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <CardTitle className="text-xl">{exercise.name}</CardTitle>
-                {exercise.category && (
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                    {exercise.category.toUpperCase()}
-                  </span>
-                )}
+                <div className="flex flex-wrap gap-1">
+                  {exercise.categories && exercise.categories.length > 0 ? (
+                    exercise.categories.map((cat) => (
+                      <span 
+                        key={cat.id}
+                        className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary whitespace-nowrap"
+                      >
+                        {cat.name}
+                      </span>
+                    ))
+                  ) : exercise.category ? (
+                    // Fallback for old data if needed
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                      {exercise.category.toUpperCase()}
+                    </span>
+                  ) : null}
+                </div>
               </div>
               <p className="mt-1 text-sm text-muted-foreground">
                 Repetições sugeridas: {exercise.suggested_reps}
               </p>
             </div>
             {isAdmin && (
-              <div className="flex gap-2">
+              <div className="flex gap-2 shrink-0">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -125,4 +137,3 @@ export function ExerciseCard({
     </>
   )
 }
-
