@@ -25,5 +25,5 @@ jobs:
           ssh -i ~/.ssh/id_ed25519 root@185.169.252.100 << 'EOF'
             cd training
             git pull origin main
-            docker-compose -f docker-compose.prod.yml up -d --build
+            docker compose -f docker-compose.prod.yml up -d --build
           EOF
