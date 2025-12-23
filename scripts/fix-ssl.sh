@@ -62,19 +62,35 @@ else
     rm -f certbot/www/$TEST_FILE
 fi
 
-# Obter certificado
+# Obter certificado (forçar novo certificado, não renovação)
 echo ""
 echo "🔐 Obtendo certificado SSL..."
+echo "   Isso pode levar alguns minutos..."
+
+# Remover qualquer registro existente do Certbot
+if [ -d "certbot/conf/accounts" ]; then
+    echo "   Removendo registros existentes do Certbot..."
+    rm -rf certbot/conf/accounts
+fi
+
+# Limpar logs também
+rm -rf certbot/conf/logs/* 2>/dev/null || true
+
+# Obter certificado novo (forçar, não renovar)
 docker compose run --rm certbot certonly \
   --webroot \
   --webroot-path=/var/www/certbot \
   --email pedroandrade202004@gmail.com \
   --agree-tos \
   --no-eff-email \
+  --force-renewal \
+  --non-interactive \
   -d $DOMAIN \
   -d www.$DOMAIN
 
-if [ $? -eq 0 ]; then
+CERTBOT_EXIT_CODE=$?
+
+if [ $CERTBOT_EXIT_CODE -eq 0 ]; then
     # Atualizar nginx.conf para usar SSL
     echo "🔄 Atualizando configuração do Nginx para usar SSL..."
     cp nginx/nginx-ssl.conf nginx/nginx.conf
