@@ -27,16 +27,16 @@ POSTGRES_DB=trainally
 
 ```bash
 # Build e iniciar todos os serviços
-docker-compose up -d --build
+docker compose up -d --build
 
 # Ver logs
-docker-compose logs -f app
+docker compose logs -f app
 
 # Parar serviços
-docker-compose down
+docker compose down
 
 # Parar e remover volumes (apaga dados do PostgreSQL)
-docker-compose down -v
+docker compose down -v
 ```
 
 ### 3. Aplicar Migrações (se usar PostgreSQL local)
@@ -45,7 +45,7 @@ Se estiver usando PostgreSQL local, você precisa aplicar as migrações:
 
 ```bash
 # Entrar no container do PostgreSQL
-docker-compose exec postgres psql -U trainally -d trainally
+docker compose exec postgres psql -U trainally -d trainally
 
 # Ou usar o Supabase CLI se tiver configurado
 supabase db push
@@ -56,11 +56,11 @@ supabase db push
 ### Opção 1: Usando Supabase Cloud (Recomendado)
 
 1. Configure o Supabase Cloud
-2. Use apenas o serviço `app` no docker-compose
+2. Use apenas o serviço `app` no docker compose
 3. Remova ou comente o serviço `postgres`
 
 ```yaml
-# docker-compose.prod.yml
+# docker compose.prod.yml
 version: '3.8'
 
 services:
@@ -84,7 +84,7 @@ services:
 
 1. Clone o repositório no servidor
 2. Configure o `.env.local`
-3. Execute `docker-compose up -d --build`
+3. Execute `docker compose up -d --build`
 4. Configure um reverse proxy (Nginx) para apontar para `localhost:3000`
 
 ### Opção 3: Deploy em Plataformas Cloud
@@ -108,28 +108,28 @@ services:
 
 ```bash
 # Rebuild após mudanças
-docker-compose up -d --build
+docker compose up -d --build
 
 # Ver logs em tempo real
-docker-compose logs -f
+docker compose logs -f
 
 # Ver logs de um serviço específico
-docker-compose logs -f app
+docker compose logs -f app
 
 # Parar serviços
-docker-compose stop
+docker compose stop
 
 # Iniciar serviços
-docker-compose start
+docker compose start
 
 # Remover tudo (incluindo volumes)
-docker-compose down -v
+docker compose down -v
 
 # Executar comandos no container
-docker-compose exec app sh
+docker compose exec app sh
 
 # Ver status dos containers
-docker-compose ps
+docker compose ps
 ```
 
 ## 📝 Notas

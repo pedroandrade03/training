@@ -54,10 +54,10 @@ mkdir -p certbot/conf certbot/www
 cp nginx/nginx-http.conf nginx/nginx.conf
 
 # 3. Iniciar Nginx
-docker-compose up -d nginx
+docker compose up -d nginx
 
 # 4. Obter certificado
-docker-compose run --rm certbot certonly \
+docker compose run --rm certbot certonly \
   --webroot \
   --webroot-path=/var/www/certbot \
   --email seu-email@exemplo.com \
@@ -68,28 +68,28 @@ docker-compose run --rm certbot certonly \
 
 # 5. Restaurar nginx.conf completo
 cp nginx/nginx.conf nginx/nginx.conf
-docker-compose restart nginx
+docker compose restart nginx
 ```
 
 ### 4. Iniciar Aplicação
 
 ```bash
 # Iniciar todos os serviços
-docker-compose up -d
+docker compose up -d
 
 # Verificar logs
-docker-compose logs -f nginx
-docker-compose logs -f app
+docker compose logs -f nginx
+docker compose logs -f app
 ```
 
 ### 5. Verificar Configuração
 
 ```bash
 # Testar configuração do Nginx
-docker-compose exec nginx nginx -t
+docker compose exec nginx nginx -t
 
 # Verificar certificados
-docker-compose exec certbot certbot certificates
+docker compose exec certbot certbot certificates
 ```
 
 ## 🔄 Renovação Automática de Certificados
@@ -99,8 +99,8 @@ O certificado SSL é renovado automaticamente pelo container `certbot` que roda 
 Para renovar manualmente:
 
 ```bash
-docker-compose exec certbot certbot renew
-docker-compose exec nginx nginx -s reload
+docker compose exec certbot certbot renew
+docker compose exec nginx nginx -s reload
 ```
 
 ## 🔧 Configurações Avançadas
@@ -151,31 +151,31 @@ location / {
 
 3. Verifique logs do certbot:
    ```bash
-   docker-compose logs certbot
+   docker compose logs certbot
    ```
 
 ### Nginx não inicia
 
 1. Verifique a sintaxe:
    ```bash
-   docker-compose exec nginx nginx -t
+   docker compose exec nginx nginx -t
    ```
 
 2. Verifique logs:
    ```bash
-   docker-compose logs nginx
+   docker compose logs nginx
    ```
 
 ### Aplicação não responde
 
 1. Verifique se o container da app está rodando:
    ```bash
-   docker-compose ps
+   docker compose ps
    ```
 
 2. Teste a conexão interna:
    ```bash
-   docker-compose exec nginx wget -O- http://app:3000
+   docker compose exec nginx wget -O- http://app:3000
    ```
 
 ## 📝 Notas Importantes

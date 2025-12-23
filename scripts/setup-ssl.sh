@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script para configurar SSL com Let's Encrypt
-# Execute este script antes de iniciar o docker-compose pela primeira vez
+# Execute este script antes de iniciar o docker compose pela primeira vez
 
 DOMAIN="trainally.com.br"
 EMAIL="pedroandrade202004@gmail.com"
@@ -22,14 +22,14 @@ cp nginx/nginx-http.conf nginx/nginx.conf
 
 # Iniciar Nginx temporariamente
 echo "📦 Iniciando Nginx temporariamente..."
-docker-compose up -d nginx
+docker compose up -d nginx
 
 # Aguardar Nginx iniciar
 sleep 5
 
 # Obter certificado SSL
 echo "🔐 Obtendo certificado SSL do Let's Encrypt..."
-docker-compose run --rm certbot certonly \
+docker compose run --rm certbot certonly \
   --webroot \
   --webroot-path=/var/www/certbot \
   --email $EMAIL \
@@ -47,7 +47,7 @@ if [ $? -eq 0 ]; then
     
     # Reiniciar Nginx com SSL
     echo "🔄 Reiniciando Nginx com SSL..."
-    docker-compose restart nginx
+    docker compose restart nginx
     
     echo "✅ SSL configurado com sucesso!"
     echo "🌐 Acesse: https://$DOMAIN"
